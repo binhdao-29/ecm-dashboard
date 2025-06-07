@@ -1,35 +1,56 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import * as React from 'react'
+import DashboardIcon from '@mui/icons-material/Dashboard'
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import { ReactRouterAppProvider } from '@toolpad/core/react-router'
+import { Outlet, useNavigate } from 'react-router'
+import type { Navigation, Session } from '@toolpad/core/AppProvider'
+import { SessionContext } from '@/contexts/SessionContext'
 
-function App() {
-  const [count, setCount] = useState(0)
+const NAVIGATION: Navigation = [
+  {
+    kind: 'header',
+    title: 'Menu items'
+  },
+  {
+    title: 'Dashboard',
+    icon: <DashboardIcon />
+  },
+  {
+    segment: 'orders',
+    title: 'Orders',
+    icon: <ShoppingCartIcon />
+  }
+]
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+const BRANDING = {
+  title: 'Admin Dashboard'
 }
 
-export default App
+export default function App() {
+  const [session, setSession] = React.useState<Session | null>(null)
+  const navigate = useNavigate()
+
+  const signIn = React.useCallback(() => {
+    navigate('/sign-in')
+  }, [navigate])
+
+  const signOut = React.useCallback(() => {
+    setSession(null)
+    navigate('/sign-in')
+  }, [navigate])
+
+  const sessionContextValue = React.useMemo(() => ({ session, setSession }), [session, setSession])
+
+  return (
+    <SessionContext.Provider value={sessionContextValue}>
+      <ReactRouterAppProvider
+        navigation={NAVIGATION}
+        branding={BRANDING}
+        session={session}
+        authentication={{ signIn, signOut }}
+      >
+        <Outlet />
+      </ReactRouterAppProvider>
+    </SessionContext.Provider>
+  )
+}
