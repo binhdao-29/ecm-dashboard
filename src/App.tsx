@@ -1,6 +1,9 @@
-import * as React from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import DashboardIcon from '@mui/icons-material/Dashboard'
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
+import CollectionsIcon from '@mui/icons-material/Collections'
+import PeopleIcon from '@mui/icons-material/People'
+import CommentIcon from '@mui/icons-material/Comment'
 import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import { Outlet, useNavigate } from 'react-router'
 import type { Navigation, Session } from '@toolpad/core/AppProvider'
@@ -16,9 +19,24 @@ const NAVIGATION: Navigation = [
     icon: <DashboardIcon />
   },
   {
-    segment: 'orders',
-    title: 'Orders',
-    icon: <ShoppingCartIcon />
+    segment: 'sales',
+    title: 'Sales',
+    icon: <AttachMoneyIcon />
+  },
+  {
+    segment: 'catalog',
+    title: 'Catalog',
+    icon: <CollectionsIcon />
+  },
+  {
+    segment: 'customers',
+    title: 'Customers',
+    icon: <PeopleIcon />
+  },
+  {
+    segment: 'reviews',
+    title: 'Reviews',
+    icon: <CommentIcon />
   }
 ]
 
@@ -27,19 +45,19 @@ const BRANDING = {
 }
 
 export default function App() {
-  const [session, setSession] = React.useState<Session | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const navigate = useNavigate()
 
-  const signIn = React.useCallback(() => {
+  const signIn = useCallback(() => {
     navigate('/sign-in')
   }, [navigate])
 
-  const signOut = React.useCallback(() => {
+  const signOut = useCallback(() => {
     setSession(null)
     navigate('/sign-in')
   }, [navigate])
 
-  const sessionContextValue = React.useMemo(() => ({ session, setSession }), [session, setSession])
+  const sessionContextValue = useMemo(() => ({ session, setSession }), [session, setSession])
 
   return (
     <SessionContext.Provider value={sessionContextValue}>
