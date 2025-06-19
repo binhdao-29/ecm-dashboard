@@ -4,13 +4,16 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import CollectionsIcon from '@mui/icons-material/Collections'
 import PeopleIcon from '@mui/icons-material/People'
 import CommentIcon from '@mui/icons-material/Comment'
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import { Outlet, useNavigate } from 'react-router'
-import type { Navigation, Session } from '@toolpad/core/AppProvider'
+import { type Navigation, type Session } from '@toolpad/core/AppProvider'
 import { SessionContext } from '@/contexts/SessionContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const queryClient = new QueryClient()
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 
 const NAVIGATION: Navigation = [
   {
@@ -24,7 +27,19 @@ const NAVIGATION: Navigation = [
   {
     segment: 'sales',
     title: 'Sales',
-    icon: <AttachMoneyIcon />
+    icon: <AttachMoneyIcon />,
+    children: [
+      {
+        segment: 'orders',
+        title: 'Orders',
+        icon: <AttachMoneyIcon />
+      },
+      {
+        segment: 'invoices',
+        title: 'Invoices',
+        icon: <LibraryBooksIcon />
+      }
+    ]
   },
   {
     segment: 'catalog',
@@ -71,7 +86,9 @@ export default function App() {
           session={session}
           authentication={{ signIn, signOut }}
         >
-          <Outlet />
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <Outlet />
+          </LocalizationProvider>
         </ReactRouterAppProvider>
       </QueryClientProvider>
     </SessionContext.Provider>

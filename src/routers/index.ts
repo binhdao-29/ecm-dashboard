@@ -10,6 +10,7 @@ import Review from '@/features/reviews'
 import DetailCustomer from '@/features/detailCustomer'
 import DetailReview from '@/features/detailReview'
 import DetailOrder from '@/features/detailOrder'
+import Invoices from '@/features/invoices'
 
 export const router = createBrowserRouter([
   {
@@ -24,7 +25,7 @@ export const router = createBrowserRouter([
             Component: Dashboard
           },
           {
-            path: path.sales,
+            path: path.orders,
             Component: Orders
           },
           {
@@ -50,6 +51,10 @@ export const router = createBrowserRouter([
           {
             path: path.detailOrder,
             Component: DetailOrder
+          },
+          {
+            path: path.invoices,
+            Component: Invoices
           }
         ]
       },
