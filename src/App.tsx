@@ -8,6 +8,9 @@ import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import { Outlet, useNavigate } from 'react-router'
 import type { Navigation, Session } from '@toolpad/core/AppProvider'
 import { SessionContext } from '@/contexts/SessionContext'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient()
 
 const NAVIGATION: Navigation = [
   {
@@ -61,14 +64,16 @@ export default function App() {
 
   return (
     <SessionContext.Provider value={sessionContextValue}>
-      <ReactRouterAppProvider
-        navigation={NAVIGATION}
-        branding={BRANDING}
-        session={session}
-        authentication={{ signIn, signOut }}
-      >
-        <Outlet />
-      </ReactRouterAppProvider>
+      <QueryClientProvider client={queryClient}>
+        <ReactRouterAppProvider
+          navigation={NAVIGATION}
+          branding={BRANDING}
+          session={session}
+          authentication={{ signIn, signOut }}
+        >
+          <Outlet />
+        </ReactRouterAppProvider>
+      </QueryClientProvider>
     </SessionContext.Provider>
   )
 }

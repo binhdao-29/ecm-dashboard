@@ -11,6 +11,8 @@ import DashboardCard from './components/DashboardCard'
 import LineChartDashboard from './components/LineChartDashboard'
 import RevenueHistory from './components/RevenueHistory'
 import { useNavigate } from 'react-router'
+import { useQuery } from '@tanstack/react-query'
+import { fetchPosts } from './services'
 
 const BannerDashBoard = styled('div')({
   marginBlock: 16,
@@ -23,6 +25,13 @@ const BannerDashBoard = styled('div')({
 })
 
 const Dashboard = () => {
+  const { data } = useQuery({
+    queryKey: ['orders'],
+    queryFn: fetchPosts
+  })
+
+  console.log('data', data)
+
   return (
     <Box>
       <BannerDashBoard sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
