@@ -1,5 +1,4 @@
-import { Box, Typography, TypographyProps, TypographyTypeMap } from '@mui/material'
-import { OverridableComponent } from '@mui/material/OverridableComponent'
+import { Typography, TypographyProps } from '@mui/material'
 
 interface Props extends TypographyProps {
   line?: number
