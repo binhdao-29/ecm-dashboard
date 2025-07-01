@@ -1,7 +1,9 @@
-import React from 'react'
+import CustomTable from '@/components/CustomTable'
+import React, { useContext } from 'react'
+import { FilterContext } from '../context/FilterContext'
 
-const Ordered = () => {
-  return <div>Ordered</div>
+export default function Ordered() {
+  const { columnSetting, activeTab } = useContext(FilterContext)
+
+  return <CustomTable size='medium' dataColumn={columnSetting[activeTab]} />
 }
-
-export default Ordered

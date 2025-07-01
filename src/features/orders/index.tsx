@@ -5,80 +5,102 @@ import TabPanel from '@mui/lab/TabPanel'
 import Box from '@mui/material/Box'
 import Tab from '@mui/material/Tab'
 
-import { ColumnItem, FilterItem, SaveQuery } from '@/types'
-import { useState } from 'react'
+import { ColumnItem, FilterItem, FilterParamOrder, SaveQuery } from '@/types'
+import { useEffect, useState } from 'react'
 import Cancelled from './components/Cancelled'
 import Delivered from './components/Delivered'
-import Ordered from './components/Ordered'
 import { FilterContext } from './context/FilterContext'
+import Ordered from './components/Ordered'
+import useSearchParam from '@/hooks/useSearchParam'
+import { ppid } from 'process'
+import { cleanObject } from '@/utils'
 
 const initialColumns: ColumnItem[] = [
   {
+    label: 'Customers',
+    value: 'customers',
+    isVisible: true,
+    numeric: false,
+    disablePadding: true
+  },
+  {
     label: 'Date',
-    value: 'Date',
-    isVisible: false
+    value: 'date',
+    isVisible: false,
+    numeric: true,
+    disablePadding: false
   },
   {
     label: 'Reference',
-    value: 'Reference',
-    isVisible: false
+    value: 'reference',
+    isVisible: true,
+    numeric: true,
+    disablePadding: false
   },
-  {
-    label: 'Customers',
-    value: 'Customers',
-    isVisible: false
-  },
+
   {
     label: 'Address',
-    value: 'Address',
-    isVisible: false
+    value: 'address',
+    isVisible: false,
+    numeric: true,
+    disablePadding: false
   },
   {
     label: 'Nb items',
-    value: 'Nb items',
-    isVisible: false
+    value: 'nb _items',
+    isVisible: false,
+    numeric: true,
+    disablePadding: false
   },
   {
     label: 'Total ex taxes',
-    value: 'Total ex taxes',
-    isVisible: false
+    value: 'total_ex_taxes',
+    isVisible: false,
+    numeric: true,
+    disablePadding: false
   },
   {
     label: 'Delivery fees',
-    value: 'Delivery fees',
-    isVisible: false
+    value: 'delivery_fees',
+    isVisible: false,
+    numeric: true,
+    disablePadding: false
   },
   {
     label: 'Taxes',
-    value: 'Taxes',
-    isVisible: false
+    value: 'taxes',
+    isVisible: true,
+    numeric: true,
+    disablePadding: false
   },
   {
     label: 'Total',
-    value: 'Total',
-    isVisible: false
+    value: 'total',
+    isVisible: true,
+    numeric: true,
+    disablePadding: false
   }
 ]
 
-export const initFilterItems: FilterItem[] = [
+const initFilterItems: FilterItem[] = [
   {
     label: 'Customer',
-    key: 'customer',
+    key: 'customer_id',
     isChecked: false
   },
   {
     label: 'Passed Since',
-    key: 'passed_since',
+    key: 'date_gte',
     isChecked: false
   },
   {
     label: 'Passed Before',
-    key: 'passed_before',
+    key: 'date_lte',
     isChecked: false
   },
   {
     label: 'Min amount',
-    key: 'min_amount',
+    key: 'total_gte',
     isChecked: false
   },
   {
@@ -89,15 +111,52 @@ export const initFilterItems: FilterItem[] = [
 ]
 
 const Orders = () => {
-  const [filterItems, setFilterItems] = useState<FilterItem[]>(initFilterItems)
+  const { queryObject, setMany, deleteParam } = useSearchParam()
+  const displayFilter: FilterParamOrder = JSON.parse(queryObject?.displayedFilters ?? '{}')
+  const filter = JSON.parse(queryObject.filter ?? '{}')
+
+  const [filterItems, setFilterItems] = useState<FilterItem[]>(
+    initFilterItems.map((item) => ({
+      ...item,
+      isChecked: !!displayFilter[item.key]
+    }))
+  )
+
+  useEffect(() => {
+    const newFilterItem = initFilterItems.map((item) => ({
+      ...item,
+      isChecked: !!displayFilter[item.key]
+    }))
+    setFilterItems(newFilterItem)
+  }, [JSON.stringify(queryObject)])
+
   const [saveQueries, setSaveQueries] = useState<SaveQuery[]>([])
   const [columnSetting, setColumnSetting] = useState<{ [key: string]: ColumnItem[] }>({
     ordered: initialColumns,
     delivered: initialColumns,
     cancelled: initialColumns
   })
+  const [activeTab, setActiveTab] = useState<string>(filter.status ?? 'ordered')
 
-  const [activeTab, setActiveTab] = useState<string>('ordered')
+  useEffect(() => {
+    const filterObj = cleanObject(
+      filterItems.reduce((acc: FilterItem, filterObj) => {
+        return {
+          ...acc,
+          [filterObj.key]: filterObj.isChecked
+        }
+      }, {} as FilterItem)
+    )
+
+    if (Object.keys(filterObj).length) {
+      setMany({
+        ...queryObject,
+        displayedFilters: JSON.stringify(filterObj)
+      })
+    } else {
+      deleteParam('displayedFilters')
+    }
+  }, [filterItems])
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue)
@@ -120,19 +179,19 @@ const Orders = () => {
         <FilterBar />
         <TabContext value={activeTab}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <TabList onChange={handleTabChange}>
+            <TabList variant='fullWidth' onChange={handleTabChange}>
               <Tab label='Ordered' value='ordered' />
               <Tab label='Delivered' value='delivered' />
               <Tab label='Cancelled' value='cancelled' />
             </TabList>
           </Box>
-          <TabPanel value='ordered'>
+          <TabPanel sx={{ padding: '0px' }} value='ordered'>
             <Ordered />
           </TabPanel>
-          <TabPanel value='delivered'>
+          <TabPanel sx={{ padding: '0px' }} value='delivered'>
             <Delivered />
           </TabPanel>
-          <TabPanel value='cancelled'>
+          <TabPanel sx={{ padding: '0px' }} value='cancelled'>
             <Cancelled />
           </TabPanel>
         </TabContext>

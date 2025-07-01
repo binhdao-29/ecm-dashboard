@@ -2,15 +2,21 @@ import { IconButton, SxProps, TextField } from '@mui/material'
 import { Box, BoxProps } from '@mui/system'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
+import { Controller, useFormContext } from 'react-hook-form'
 
 interface Props {
+  name: string
+  datePickerLabel: string
   sxDatePicker?: SxProps
-  DatePickerLabel: string
-  handleClose?: () => void
   wrapperProps?: BoxProps
+  handleClose?: () => void
 }
 
-export default function CustomDatePicker({ DatePickerLabel, sxDatePicker, handleClose, wrapperProps }: Props) {
+export default function CustomDatePicker({ datePickerLabel, sxDatePicker, handleClose, wrapperProps, name }: Props) {
+  const {
+    control,
+    formState: { errors }
+  } = useFormContext()
   return (
     <Box
       sx={{
@@ -27,32 +33,44 @@ export default function CustomDatePicker({ DatePickerLabel, sxDatePicker, handle
         }
       }}
     >
-      <DatePicker
-        label={DatePickerLabel}
-        format='dd/MM/yyyy'
-        enableAccessibleFieldDOMStructure={false}
-        slots={{ textField: TextField }}
-        slotProps={{
-          textField: {
-            placeholder: 'dd/mm/yyyy',
-            fullWidth: true,
-            variant: 'filled',
-            size: 'small',
-            sx: {
-              '& .MuiFilledInput-root:after': {
-                borderBottom: '2px solid #4F3CC9'
-              },
-              '& .MuiInputLabel-root.Mui-focused': {
-                color: '#4F3CC9'
-              },
-              ...sxDatePicker,
-              '& .MuiFilledInput-root': {
-                borderTopRightRadius: '10px',
-                borderTopLeftRadius: '10px',
-                paddingRight: '16px'
-              }
-            }
-          }
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => {
+          return (
+            <DatePicker
+              {...field}
+              value={field.value || null}
+              label={datePickerLabel}
+              format='dd/MM/yyyy'
+              enableAccessibleFieldDOMStructure={false}
+              slots={{ textField: TextField }}
+              slotProps={{
+                textField: {
+                  placeholder: 'dd/mm/yyyy',
+                  fullWidth: true,
+                  variant: 'filled',
+                  size: 'small',
+                  sx: {
+                    '& .MuiFilledInput-root:after': {
+                      borderBottom: '2px solid #4F3CC9'
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#4F3CC9'
+                    },
+                    ...sxDatePicker,
+                    '& .MuiFilledInput-root': {
+                      borderTopRightRadius: '10px',
+                      borderTopLeftRadius: '10px',
+                      paddingRight: '16px'
+                    }
+                  },
+                  error: !!errors[name],
+                  helperText: (errors[name]?.message as string) || ''
+                }
+              }}
+            />
+          )
         }}
       />
       {handleClose && (

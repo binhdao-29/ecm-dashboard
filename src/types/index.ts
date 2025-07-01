@@ -12,8 +12,16 @@ export interface UserData {
 
 export interface FilterItem {
   label: string
-  key: string
+  key: keyof FilterParamOrder
   isChecked: boolean
+}
+
+export interface FilterParamOrder {
+  customer_id: boolean
+  date_gte: boolean
+  date_lte: boolean
+  total_gte: boolean
+  returned: boolean
 }
 
 export interface FilterQuery {
@@ -30,4 +38,17 @@ export interface ColumnItem {
   label: string
   value: string
   isVisible: boolean
+  numeric: boolean
+  disablePadding: boolean
+}
+
+export interface SelectOptionItem {
+  label: string
+  value: string
+}
+
+export interface LSType {
+  name: string
+  value: any
+  id: number
 }
