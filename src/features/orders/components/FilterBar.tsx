@@ -7,16 +7,20 @@ import TextFieldNumber from '@/components/TextFieldNumber'
 import TextFieldSelect from '@/components/TextFieldSelect'
 import { RETURNED } from '@/constants'
 import { FilterContext } from '@/features/orders/context/FilterContext'
-import useSearchParam from '@/hooks/useSearchParam'
-import { ColumnItem, SelectOptionItem } from '@/types'
+import { useSearchParam } from '@/hooks/useSearchParam'
+import { ColumnItem, QuerySaveType, SelectOptionItem } from '@/types'
+import { cleanObject, isoStringToDate } from '@/utils'
+import { getListParamsFormLS, getOrderSaveQueryFormLS, saveListParamsToLS, setOrderSaveQueryToLS } from '@/utils/orders'
 import { yupResolver } from '@hookform/resolvers/yup'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import SearchIcon from '@mui/icons-material/Search'
 import { Box, Button, InputAdornment, styled } from '@mui/material'
-import { useContext, useEffect } from 'react'
+import cloneDeep from 'lodash/cloneDeep'
+import isEqual from 'lodash/isEqual'
+import { useContext, useEffect, useState } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { schema } from '../schemas'
-import { cleanObject } from '@/utils'
+import { OrderFilterItem, OrderParams, OrderUrlQuery } from '../type'
 
 const optionReturned: SelectOptionItem[] = [
   {
@@ -36,17 +40,21 @@ const FilterBarWrapper = styled('div')({
 })
 
 const FilterBar = () => {
-  const { saveQueries, columnSetting, filterItems, activeTab, setSaveQueries, setFilterItems, setColumnSetting } =
-    useContext(FilterContext)
-
-  const { queryObject, deleteParam, setMany } = useSearchParam()
+  const { filterItems, columnSetting, activeTab, setFilterItems, setColumnSetting } = useContext(FilterContext)
+  const { setMany } = useSearchParam()
+  const [isFirstRender, setIsFirstRender] = useState(true)
+  const currentListParamsLS = getListParamsFormLS()
+  const currentSaveQueriesLS = getOrderSaveQueryFormLS()
+  const [currentSaveQueries, setCurrentSaveQueries] = useState<QuerySaveType[]>(currentSaveQueriesLS)
 
   const methods = useForm({
     mode: 'onChange',
-    resolver: yupResolver(schema)
+    resolver: yupResolver(schema),
+    defaultValues: {
+      returned: '',
+      q: ''
+    }
   })
-
-  const { reset } = methods
 
   const customerId = useWatch({ name: 'customer_id', control: methods.control })
   const returned = useWatch({ name: 'returned', control: methods.control })
@@ -55,19 +63,25 @@ const FilterBar = () => {
   const passedSince = useWatch({ name: 'date_gte', control: methods.control })
   const q = useWatch({ name: 'q', control: methods.control })
 
-  // useEffect(() => {
-  //   reset({
-  //     customer_id: queryObject.customer_id,
-  //     returned: queryObject.returned,
-  //     total_gte: Number(queryObject.total_gte),
-  //     date_lte: JSON.parse(queryObject.date_lte)
-  //   })
-  // })
-
-  console.log(queryObject.date_lte)
+  useEffect(() => {
+    methods.reset({
+      ...currentListParamsLS.filter,
+      date_gte: isoStringToDate(currentListParamsLS.filter.date_gte),
+      date_lte: isoStringToDate(currentListParamsLS.filter.date_lte)
+    })
+  }, [JSON.stringify(currentListParamsLS.filter)])
 
   useEffect(() => {
-    const newParams = cleanObject({
+    setOrderSaveQueryToLS(currentSaveQueries)
+  }, [JSON.stringify(currentSaveQueries)])
+
+  useEffect(() => {
+    if (isFirstRender) {
+      setIsFirstRender(false)
+      return
+    }
+
+    const newFilter = cleanObject({
       q: q,
       returned: returned,
       total_gte: minAmount,
@@ -77,15 +91,30 @@ const FilterBar = () => {
       status: activeTab
     })
 
-    if (Object.keys(newParams).length) {
+    saveListParamsToLS({
+      displayedFilters: currentListParamsLS.displayedFilters,
+      filter: newFilter
+    })
+
+    const currentFilterForm = cloneDeep(newFilter)
+    const currentFilterLS = cloneDeep(currentListParamsLS.filter)
+
+    if (!isEqual(currentFilterLS, currentFilterForm)) {
       setMany({
-        ...queryObject,
-        filter: JSON.stringify(newParams)
+        displayedFilters: JSON.stringify(currentListParamsLS.displayedFilters),
+        filter: JSON.stringify(newFilter)
       })
-    } else {
-      deleteParam('filter')
     }
   }, [q, customerId, returned, minAmount, passedBefore, passedSince, activeTab])
+
+  const handleAddSaveQuery = (value: QuerySaveType[]) => {
+    setCurrentSaveQueries(value)
+  }
+
+  const handleRemoveCurrentSaveQuery = (id: number) => {
+    const newUseQuery = currentSaveQueries.filter((query) => query.id != id)
+    setCurrentSaveQueries(newUseQuery)
+  }
 
   const handleChangeColumn = (columns: ColumnItem[]) => {
     const value = {
@@ -95,10 +124,71 @@ const FilterBar = () => {
     setColumnSetting(value)
   }
 
+  const setParamUrlAndLS = (filterItem: OrderFilterItem[]) => {
+    const newDisplayedFilters = cleanObject(
+      filterItem.reduce((acc, curr) => {
+        if (!curr.isChecked) {
+          delete currentListParamsLS.filter[curr.key]
+        }
+        return { ...acc, [curr.key]: curr.isChecked }
+      }, {})
+    )
+
+    saveListParamsToLS({
+      displayedFilters: newDisplayedFilters,
+      filter: currentListParamsLS.filter
+    })
+
+    setMany({
+      displayedFilters: JSON.stringify(newDisplayedFilters),
+      filter: JSON.stringify({ ...currentListParamsLS.filter })
+    })
+  }
+
+  const handleAddFilterItem = (newFilterItems: OrderFilterItem[]) => {
+    setFilterItems(newFilterItems)
+    const newDisplayedFilters = newFilterItems
+      .filter((item) => item.isChecked)
+      .reduce((acc, curr) => {
+        return { ...acc, [curr.key]: curr.isChecked }
+      }, {})
+
+    saveListParamsToLS({
+      displayedFilters: newDisplayedFilters,
+      filter: currentListParamsLS.filter
+    })
+
+    setMany({
+      displayedFilters: JSON.stringify(newDisplayedFilters),
+      filter: JSON.stringify({ ...currentListParamsLS.filter })
+    })
+  }
+
   const handleRemoveFilterItem = (key: string) => () => {
     const indexOfFilterItems = filterItems.findIndex((item) => item.key === key)
     filterItems[indexOfFilterItems].isChecked = false
     setFilterItems([...filterItems])
+
+    setParamUrlAndLS(filterItems)
+  }
+
+  const handleRemoveAllFilterItem = (newFilterItems: OrderFilterItem[]) => {
+    setFilterItems(newFilterItems)
+
+    setParamUrlAndLS(newFilterItems)
+  }
+
+  const handleUseQueryFromLS = (param: OrderUrlQuery) => {
+    const newFilterItems = filterItems.map((item) => ({
+      ...item,
+      isChecked: !!param.displayedFilters[item.key]
+    }))
+    setFilterItems(newFilterItems)
+
+    saveListParamsToLS({
+      displayedFilters: param.displayedFilters,
+      filter: param.filter
+    })
   }
 
   return (
@@ -173,11 +263,15 @@ const FilterBar = () => {
       </FormProvider>
 
       <Box sx={{ display: 'flex', alignContent: 'center', gap: '8px', color: '#4F3CC9', flexShrink: 0 }}>
-        <AddFilter
+        <AddFilter<OrderParams>
+          queryObject={currentListParamsLS}
           filterItems={filterItems}
-          saveQueries={saveQueries}
-          setFilterItems={setFilterItems}
-          setSaveQueries={setSaveQueries}
+          currentSaveQueries={currentSaveQueries}
+          handleUseQueryFromLS={handleUseQueryFromLS}
+          handleAddFilterItem={handleAddFilterItem}
+          handleRemoveAllFilterItem={handleRemoveAllFilterItem}
+          handleAddSaveQuery={handleAddSaveQuery}
+          handleRemoveSaveQuery={handleRemoveCurrentSaveQuery}
         />
         <SettingColumns columns={columnSetting[activeTab]} handleChangeColumn={handleChangeColumn} />
         <Button startIcon={<FileDownloadIcon />} sx={{ color: '#4F3CC9', bgcolor: 'transparent' }} variant='text'>

@@ -6,11 +6,8 @@ export const schema = yup.object().shape(
     total_gte: yup
       .number()
       .transform((value, originalValue) => (originalValue === '' ? null : value))
-      .nullable()
       .min(0, 'Số tiền tối thiểu phải lớn hơn hoặc bằng 0'),
-
-    returned: yup.string().nullable(),
-
+    returned: yup.string(),
     date_gte: yup
       .date()
       .nullable()
@@ -18,7 +15,6 @@ export const schema = yup.object().shape(
         is: (val: any) => val != null,
         then: (schema) => schema.max(yup.ref('date_lte'), 'Ngày bắt đầu phải trước ngày kết thúc')
       }),
-
     date_lte: yup
       .date()
       .nullable()
@@ -26,8 +22,7 @@ export const schema = yup.object().shape(
         is: (val: any) => val != null,
         then: (schema) => schema.min(yup.ref('date_gte'), 'Ngày kết thúc phải sau ngày bắt đầu')
       }),
-
-    q: yup.string().nullable()
+    q: yup.string()
   },
   [['date_lte', 'date_gte']]
 )
