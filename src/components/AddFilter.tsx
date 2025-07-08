@@ -1,12 +1,10 @@
-import useSearchParam from '@/hooks/useSearchParam'
-import { FilterItem, LSType, SaveQuery } from '@/types'
-import { deleteOrderQueryFormLS, getOrderQueryFormLS, saveOrderQueryToLS } from '@/utils/orders'
+import { useSearchParam } from '@/hooks/useSearchParam'
+import { FilterItem, QuerySaveType, UrlQuery } from '@/types'
 import BookmarkAddIcon from '@mui/icons-material/BookmarkAdd'
-import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemove'
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder'
+import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemove'
 import CloseIcon from '@mui/icons-material/Close'
 import FilterListIcon from '@mui/icons-material/FilterList'
-import isEqual from 'lodash/isEqual'
 import {
   Box,
   Checkbox,
@@ -22,25 +20,39 @@ import Button from '@mui/material/Button'
 import Popover from '@mui/material/Popover'
 import Typography from '@mui/material/Typography'
 import { cloneDeep } from 'lodash'
+import isEqual from 'lodash/isEqual'
 import * as React from 'react'
-import { data, useParams } from 'react-router'
 
-interface Props {
-  filterItems: FilterItem[]
-  saveQueries?: SaveQuery[]
-  setFilterItems: (filterItems: FilterItem[]) => void
-  setSaveQueries: (saveQueries: SaveQuery[]) => void
+interface Props<T> {
+  queryObject: UrlQuery<T>
+  filterItems: FilterItem<T>[]
+  currentSaveQueries?: QuerySaveType[]
+  handleAddFilterItem: (filterItems: FilterItem<T>[]) => void
+  handleRemoveAllFilterItem: (filterItems: FilterItem<T>[]) => void
+  handleAddSaveQuery: (currentSaveQueries: QuerySaveType[]) => void
+  handleRemoveSaveQuery: (id: number) => void
+  handleUseQueryFromLS: (param: UrlQuery<T>) => void
 }
 
-export default function AddFilter({ filterItems, saveQueries = [], setFilterItems, setSaveQueries }: Props) {
+export default function AddFilter<T>({
+  queryObject,
+  filterItems,
+  currentSaveQueries = [],
+  handleAddFilterItem,
+  handleRemoveAllFilterItem,
+  handleAddSaveQuery,
+  handleRemoveSaveQuery,
+  handleUseQueryFromLS
+}: Props<T>) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null)
   const [openDialog, setOpenDialog] = React.useState(false)
   const [openRemoveDialog, setOpenRemoveDialog] = React.useState(false)
-  const [saveName, setSaveName] = React.useState('')
+  const [saveQueryName, setSaveQueryName] = React.useState('')
   const [removeId, setRemoveId] = React.useState(0)
-  const currentQuery: LSType[] = getOrderQueryFormLS()
 
-  const { queryObject } = useSearchParam()
+  const open = Boolean(anchorEl)
+  const isCurrentQuery = currentSaveQueries.some((data) => isEqual(data.value, queryObject))
+
   const { setMany } = useSearchParam()
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -53,14 +65,10 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
 
   const handleCheckBox = (idx: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const cloneFilterItem = cloneDeep(filterItems)
-
     cloneFilterItem[idx].isChecked = e.target.checked
-    const updateFilterItem: FilterItem[] = [...cloneFilterItem]
-    setFilterItems(updateFilterItem)
+    const updateFilterItem: FilterItem<T>[] = [...cloneFilterItem]
+    handleAddFilterItem(updateFilterItem)
   }
-
-  const open = Boolean(anchorEl)
-  const id = open ? 'simple-popover' : undefined
 
   const handleRemoveAll = () => {
     const newFilterItem = filterItems.map((item) => {
@@ -69,12 +77,15 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
         isChecked: false
       }
     })
-    setFilterItems(newFilterItem)
+
+    handleRemoveAllFilterItem(newFilterItem)
+    setAnchorEl(null)
   }
 
   const handleClickOpen = () => {
-    setSaveName('')
+    setSaveQueryName('')
     setOpenDialog(true)
+    setAnchorEl(null)
   }
 
   const handleCloseDialog = () => {
@@ -82,33 +93,41 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
   }
 
   const handleSave = () => {
-    if (!saveName) {
-      setOpenDialog(false)
-      return
-    }
-    const newSaveQuery: LSType[] = [
-      ...currentQuery,
+    const newSaveQuery: QuerySaveType[] = [
+      ...currentSaveQueries,
       {
-        name: saveName,
+        name: saveQueryName,
         value: queryObject,
         id: new Date().getTime()
       }
     ]
-    saveOrderQueryToLS(newSaveQuery)
+    handleAddSaveQuery(newSaveQuery)
     setOpenDialog(false)
+    setSaveQueryName('')
   }
 
-  const handleClickOpenRemoveDialog = (id: number) => {
+  const handleOpenRemoveDialog = (id: number) => {
     setOpenRemoveDialog(true)
     setRemoveId(id)
+    setAnchorEl(null)
   }
 
   const handleCloseRemoveDialog = () => {
     setOpenRemoveDialog(false)
-    deleteOrderQueryFormLS(removeId)
   }
 
-  const isQueryObj = currentQuery.find((data) => isEqual(data.value, queryObject))
+  const handleConfirmRemoveDialog = () => {
+    handleRemoveSaveQuery(removeId)
+    setOpenRemoveDialog(false)
+  }
+
+  const handleUseSaveQuery = (data: QuerySaveType) => {
+    setMany({
+      filter: JSON.stringify(data.value.filter),
+      displayedFilters: JSON.stringify(data.value.displayedFilters)
+    })
+    handleUseQueryFromLS(data.value)
+  }
 
   return (
     <div>
@@ -121,7 +140,6 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
         ADD FILTERS
       </Button>
       <Popover
-        id={id}
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
@@ -173,7 +191,7 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
 
           <Box sx={{ bgcolor: 'rgba(0, 0, 0, 0.12)', marginBlock: '8px', height: '1px', p: '0px' }}></Box>
 
-          {currentQuery.map((data) =>
+          {currentSaveQueries.map((data) =>
             isEqual(data.value, queryObject) ? (
               <Box
                 key={data.id}
@@ -188,19 +206,14 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
                     bgcolor: 'rgba(0, 0, 0, 0.04)'
                   }
                 }}
-                onClick={() => handleClickOpenRemoveDialog(data.id)}
+                onClick={() => handleOpenRemoveDialog(data.id)}
               >
                 <BookmarkRemoveIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
                 <Typography>{`Remove query "${data.name}"`}</Typography>
               </Box>
             ) : (
               <Box
-                onClick={() => {
-                  setMany({
-                    filter: data.value.filter,
-                    displayedFilters: data.value.displayedFilters
-                  })
-                }}
+                onClick={() => handleUseSaveQuery(data)}
                 key={data.id}
                 sx={{
                   display: 'flex',
@@ -220,10 +233,7 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
             )
           )}
 
-          {/* save query */}
-          {isQueryObj ? (
-            ''
-          ) : (
+          {!isCurrentQuery && (
             <Box
               onClick={handleClickOpen}
               sx={{
@@ -242,23 +252,6 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
               <Typography>Save current query</Typography>
             </Box>
           )}
-
-          {/* <Box
-            sx={{
-              display: 'flex',
-              gap: '16px',
-              alignItems: 'center',
-              paddingBlock: '6px',
-              paddingInline: 2,
-              cursor: 'pointer',
-              '&:hover': {
-                bgcolor: 'rgba(0, 0, 0, 0.04)'
-              }
-            }}
-          >
-            <BookmarkAddIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
-            <Typography onClick={handleClickOpen}>Save current query</Typography>
-          </Box> */}
 
           <Box
             onClick={handleRemoveAll}
@@ -285,8 +278,8 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
 
         <DialogContent>
           <TextField
-            value={saveName}
-            onChange={(e) => setSaveName(e.target.value)}
+            value={saveQueryName}
+            onChange={(e) => setSaveQueryName(e.target.value)}
             label='Query name'
             type='search'
             variant='filled'
@@ -294,7 +287,7 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>CANCEL</Button>
-          <Button onClick={handleSave} autoFocus>
+          <Button disabled={!saveQueryName} onClick={handleSave} autoFocus>
             SAVE
           </Button>
         </DialogActions>
@@ -308,10 +301,8 @@ export default function AddFilter({ filterItems, saveQueries = [], setFilterItem
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenRemoveDialog(false)}>CANCEL</Button>
-          <Button onClick={handleCloseRemoveDialog} autoFocus>
-            CONFIRM
-          </Button>
+          <Button onClick={handleCloseRemoveDialog}>CANCEL</Button>
+          <Button onClick={handleConfirmRemoveDialog}>CONFIRM</Button>
         </DialogActions>
       </Dialog>
     </div>

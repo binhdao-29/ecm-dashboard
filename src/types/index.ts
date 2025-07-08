@@ -1,5 +1,3 @@
-import { FILTER_TYPE } from '@/constants'
-
 export interface UserData {
   id: number
   avatar: string
@@ -10,28 +8,15 @@ export interface UserData {
   price: number
 }
 
-export interface FilterItem {
+export interface FilterItem<T> {
   label: string
-  key: keyof FilterParamOrder
+  key: keyof T
   isChecked: boolean
-}
-
-export interface FilterParamOrder {
-  customer_id: boolean
-  date_gte: boolean
-  date_lte: boolean
-  total_gte: boolean
-  returned: boolean
 }
 
 export interface FilterQuery {
   field: string
   value: string
-}
-
-export interface SaveQuery {
-  name: string
-  values: FilterQuery[]
 }
 
 export interface ColumnItem {
@@ -47,8 +32,13 @@ export interface SelectOptionItem {
   value: string
 }
 
-export interface LSType {
+export interface QuerySaveType {
   name: string
   value: any
   id: number
+}
+
+export interface UrlQuery<T> {
+  displayedFilters: { [key in keyof T]?: boolean }
+  filter: { [key in keyof T]?: T[key] }
 }

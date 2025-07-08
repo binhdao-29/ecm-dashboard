@@ -34,6 +34,7 @@ export default function TextFieldSelect({
         render={({ field }) => (
           <TextField
             {...field}
+            value={field.value || ''}
             sx={{
               ...sxTextFiled,
               '& .MuiFilledInput-root:after': {

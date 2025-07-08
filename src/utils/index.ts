@@ -16,3 +16,8 @@ export function cleanObject<T extends Record<string, any>>(obj: T): Partial<T> {
 
   return result
 }
+
+export function isoStringToDate(isoString?: string): Date | null {
+  if (!isoString) return null
+  return new Date(isoString)
+}

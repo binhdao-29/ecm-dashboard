@@ -5,15 +5,15 @@ import TabPanel from '@mui/lab/TabPanel'
 import Box from '@mui/material/Box'
 import Tab from '@mui/material/Tab'
 
-import { ColumnItem, FilterItem, FilterParamOrder, SaveQuery } from '@/types'
-import { useEffect, useState } from 'react'
+import { useSearchParam } from '@/hooks/useSearchParam'
+import { ColumnItem } from '@/types'
+import { getListParamsFormLS } from '@/utils/orders'
+import { useState } from 'react'
 import Cancelled from './components/Cancelled'
 import Delivered from './components/Delivered'
-import { FilterContext } from './context/FilterContext'
 import Ordered from './components/Ordered'
-import useSearchParam from '@/hooks/useSearchParam'
-import { ppid } from 'process'
-import { cleanObject } from '@/utils'
+import { FilterContext } from './context/FilterContext'
+import { OrderFilterItem } from './type'
 
 const initialColumns: ColumnItem[] = [
   {
@@ -82,7 +82,7 @@ const initialColumns: ColumnItem[] = [
   }
 ]
 
-const initFilterItems: FilterItem[] = [
+const initFilterItems: OrderFilterItem[] = [
   {
     label: 'Customer',
     key: 'customer_id',
@@ -111,52 +111,22 @@ const initFilterItems: FilterItem[] = [
 ]
 
 const Orders = () => {
-  const { queryObject, setMany, deleteParam } = useSearchParam()
-  const displayFilter: FilterParamOrder = JSON.parse(queryObject?.displayedFilters ?? '{}')
-  const filter = JSON.parse(queryObject.filter ?? '{}')
+  const { setMany } = useSearchParam()
+  const { filter, displayedFilters } = getListParamsFormLS()
 
-  const [filterItems, setFilterItems] = useState<FilterItem[]>(
+  const [filterItems, setFilterItems] = useState<OrderFilterItem[]>(
     initFilterItems.map((item) => ({
       ...item,
-      isChecked: !!displayFilter[item.key]
+      isChecked: !!displayedFilters[item.key]
     }))
   )
 
-  useEffect(() => {
-    const newFilterItem = initFilterItems.map((item) => ({
-      ...item,
-      isChecked: !!displayFilter[item.key]
-    }))
-    setFilterItems(newFilterItem)
-  }, [JSON.stringify(queryObject)])
-
-  const [saveQueries, setSaveQueries] = useState<SaveQuery[]>([])
   const [columnSetting, setColumnSetting] = useState<{ [key: string]: ColumnItem[] }>({
     ordered: initialColumns,
     delivered: initialColumns,
     cancelled: initialColumns
   })
   const [activeTab, setActiveTab] = useState<string>(filter.status ?? 'ordered')
-
-  useEffect(() => {
-    const filterObj = cleanObject(
-      filterItems.reduce((acc: FilterItem, filterObj) => {
-        return {
-          ...acc,
-          [filterObj.key]: filterObj.isChecked
-        }
-      }, {} as FilterItem)
-    )
-
-    if (Object.keys(filterObj).length) {
-      setMany({
-        ...queryObject,
-        displayedFilters: JSON.stringify(filterObj)
-      })
-    } else {
-      deleteParam('displayedFilters')
-    }
-  }, [filterItems])
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue)
@@ -168,11 +138,9 @@ const Orders = () => {
         activeTab,
         setActiveTab,
         filterItems,
-        saveQueries,
         columnSetting,
         setColumnSetting,
-        setFilterItems,
-        setSaveQueries
+        setFilterItems
       }}
     >
       <Box>
