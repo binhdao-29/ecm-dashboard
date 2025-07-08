@@ -10,10 +10,9 @@ import { Outlet, useNavigate } from 'react-router'
 import { type Navigation, type Session } from '@toolpad/core/AppProvider'
 import { SessionContext } from '@/contexts/SessionContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-
-const queryClient = new QueryClient()
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+const queryClient = new QueryClient()
 
 const NAVIGATION: Navigation = [
   {
