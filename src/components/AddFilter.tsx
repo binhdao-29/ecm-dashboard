@@ -40,7 +40,7 @@ const CustomBox = styled('div')({
   gap: '16px',
   alignItems: 'center',
   paddingBlock: '6px',
-  paddingInline: 2,
+  paddingInline: '16px',
   cursor: 'pointer',
   '&:hover': {
     bgcolor: 'rgba(0, 0, 0, 0.04)'
@@ -217,9 +217,6 @@ export default function AddFilter<T>({
               </CustomBox>
             ) : (
               <CustomBox key={data.id} onClick={() => handleUseSaveQuery(data)}>
-                <BookmarkRemoveIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
-                <Typography>{`Remove query "${data.name}"`}</Typography>
-
                 <BookmarkBorderIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
                 <Typography>{data.name}</Typography>
               </CustomBox>
