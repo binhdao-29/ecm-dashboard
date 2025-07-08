@@ -14,6 +14,7 @@ import {
   DialogContentText,
   DialogTitle,
   FormControlLabel,
+  styled,
   TextField
 } from '@mui/material'
 import Button from '@mui/material/Button'
@@ -33,6 +34,18 @@ interface Props<T> {
   handleRemoveSaveQuery: (id: number) => void
   handleUseQueryFromLS: (param: UrlQuery<T>) => void
 }
+
+const CustomBox = styled('div')({
+  display: 'flex',
+  gap: '16px',
+  alignItems: 'center',
+  paddingBlock: '6px',
+  paddingInline: 2,
+  cursor: 'pointer',
+  '&:hover': {
+    bgcolor: 'rgba(0, 0, 0, 0.04)'
+  }
+})
 
 export default function AddFilter<T>({
   queryObject,
@@ -104,6 +117,11 @@ export default function AddFilter<T>({
     handleAddSaveQuery(newSaveQuery)
     setOpenDialog(false)
     setSaveQueryName('')
+  }
+
+  const handleSetSaveQueryName = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = e.target.value
+    setSaveQueryName(value)
   }
 
   const handleOpenRemoveDialog = (id: number) => {
@@ -193,83 +211,32 @@ export default function AddFilter<T>({
 
           {currentSaveQueries.map((data) =>
             isEqual(data.value, queryObject) ? (
-              <Box
-                key={data.id}
-                sx={{
-                  display: 'flex',
-                  gap: '16px',
-                  alignItems: 'center',
-                  paddingBlock: '6px',
-                  paddingInline: 2,
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)'
-                  }
-                }}
-                onClick={() => handleOpenRemoveDialog(data.id)}
-              >
+              <CustomBox key={data.id} onClick={() => handleOpenRemoveDialog(data.id)}>
                 <BookmarkRemoveIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
                 <Typography>{`Remove query "${data.name}"`}</Typography>
-              </Box>
+              </CustomBox>
             ) : (
-              <Box
-                onClick={() => handleUseSaveQuery(data)}
-                key={data.id}
-                sx={{
-                  display: 'flex',
-                  gap: '16px',
-                  alignItems: 'center',
-                  paddingBlock: '6px',
-                  paddingInline: 2,
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)'
-                  }
-                }}
-              >
+              <CustomBox key={data.id} onClick={() => handleUseSaveQuery(data)}>
+                <BookmarkRemoveIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
+                <Typography>{`Remove query "${data.name}"`}</Typography>
+
                 <BookmarkBorderIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
                 <Typography>{data.name}</Typography>
-              </Box>
+              </CustomBox>
             )
           )}
 
           {!isCurrentQuery && (
-            <Box
-              onClick={handleClickOpen}
-              sx={{
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'center',
-                paddingBlock: '6px',
-                paddingInline: 2,
-                cursor: 'pointer',
-                '&:hover': {
-                  bgcolor: 'rgba(0, 0, 0, 0.04)'
-                }
-              }}
-            >
+            <CustomBox onClick={handleClickOpen}>
               <BookmarkAddIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
               <Typography>Save current query</Typography>
-            </Box>
+            </CustomBox>
           )}
 
-          <Box
-            onClick={handleRemoveAll}
-            sx={{
-              display: 'flex',
-              gap: '16px',
-              alignItems: 'center',
-              paddingBlock: '6px',
-              paddingInline: 2,
-              '&:hover': {
-                bgcolor: 'rgba(0, 0, 0, 0.04)'
-              },
-              cursor: 'pointer'
-            }}
-          >
+          <CustomBox onClick={handleRemoveAll}>
             <CloseIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', width: '20px' }} />
             <Typography>Remove all filters</Typography>
-          </Box>
+          </CustomBox>
         </Box>
       </Popover>
 
@@ -279,7 +246,7 @@ export default function AddFilter<T>({
         <DialogContent>
           <TextField
             value={saveQueryName}
-            onChange={(e) => setSaveQueryName(e.target.value)}
+            onChange={handleSetSaveQueryName}
             label='Query name'
             type='search'
             variant='filled'

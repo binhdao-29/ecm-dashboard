@@ -22,7 +22,6 @@ export default function SettingColumns({ columns, handleChangeColumn }: Props) {
   }
 
   const open = Boolean(anchorEl)
-  const id = open ? 'simple-popover' : undefined
 
   const handleChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const newColumns = cloneDeep(columns)
@@ -42,7 +41,6 @@ export default function SettingColumns({ columns, handleChangeColumn }: Props) {
         COLUMNS
       </Button>
       <Popover
-        id={id}
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}

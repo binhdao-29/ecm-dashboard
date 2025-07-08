@@ -59,7 +59,6 @@ export default function DashboardCard({ icon, title, value, data, isReview = fal
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            // padding: '16px',
             border: '1px solid rgb(224, 224, 227)',
             borderBottomRightRadius: '10px',
             borderBottomLeftRadius: '10px',

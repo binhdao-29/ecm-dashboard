@@ -9,7 +9,6 @@ import { ReactRouterAppProvider } from '@toolpad/core/react-router'
 import { Outlet, useNavigate } from 'react-router'
 import { type Navigation, type Session } from '@toolpad/core/AppProvider'
 import { SessionContext } from '@/contexts/SessionContext'
-// If you are using date-fns v3.x or v4.x, please import `AdapterDateFns`
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 
